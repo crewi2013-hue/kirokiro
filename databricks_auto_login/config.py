@@ -47,13 +47,13 @@ def load_config(config_path="config.json"):
 
 
 def validate_config(config):
-    """Validate that required configuration fields are present.
+    """Validate that required configuration fields are present and valid.
 
     Args:
         config: Configuration dictionary to validate.
 
     Raises:
-        ValueError: If required fields are missing or empty.
+        ValueError: If required fields are missing, empty, or invalid.
     """
     missing_fields = []
     for field in REQUIRED_FIELDS:
@@ -63,4 +63,11 @@ def validate_config(config):
     if missing_fields:
         raise ValueError(
             f"Missing required configuration fields: {', '.join(missing_fields)}"
+        )
+
+    # Validate databricks_host uses https scheme
+    databricks_host = config.get("databricks_host", "")
+    if databricks_host and not databricks_host.startswith("https://"):
+        raise ValueError(
+            "databricks_host must use https:// scheme to protect credentials in transit."
         )

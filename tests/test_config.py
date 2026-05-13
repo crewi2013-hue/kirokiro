@@ -73,6 +73,38 @@ class TestValidateConfig(unittest.TestCase):
             validate_config(config)
         self.assertIn("tenant_id", str(ctx.exception))
 
+    def test_databricks_host_http_rejected(self):
+        """Test validation fails when databricks_host uses http://."""
+        config = {
+            "tenant_id": "test-tenant-id",
+            "client_id": "test-client-id",
+            "databricks_host": "http://test.azuredatabricks.net",
+        }
+        with self.assertRaises(ValueError) as ctx:
+            validate_config(config)
+        self.assertIn("https://", str(ctx.exception))
+
+    def test_databricks_host_no_scheme_rejected(self):
+        """Test validation fails when databricks_host has no scheme."""
+        config = {
+            "tenant_id": "test-tenant-id",
+            "client_id": "test-client-id",
+            "databricks_host": "test.azuredatabricks.net",
+        }
+        with self.assertRaises(ValueError) as ctx:
+            validate_config(config)
+        self.assertIn("https://", str(ctx.exception))
+
+    def test_databricks_host_https_accepted(self):
+        """Test validation passes when databricks_host uses https://."""
+        config = {
+            "tenant_id": "test-tenant-id",
+            "client_id": "test-client-id",
+            "databricks_host": "https://test.azuredatabricks.net",
+        }
+        # Should not raise
+        validate_config(config)
+
 
 class TestLoadConfig(unittest.TestCase):
     """Tests for the load_config function."""

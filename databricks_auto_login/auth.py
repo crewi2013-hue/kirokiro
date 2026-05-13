@@ -23,7 +23,9 @@ class DatabricksAuth:
         self.config = config
         self.tenant_id = config["tenant_id"]
         self.client_id = config["client_id"]
-        self.client_secret = config.get("client_secret")
+        self.client_secret = (
+            os.environ.get("DATABRICKS_CLIENT_SECRET") or config.get("client_secret")
+        )
         self.databricks_host = config["databricks_host"]
         self.databricks_scope = config.get(
             "databricks_scope", "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default"
@@ -47,10 +49,15 @@ class DatabricksAuth:
         return cache
 
     def _save_token_cache(self):
-        """Save token cache to file if it has changed."""
+        """Save token cache to file if it has changed.
+
+        Sets file permissions to 600 (owner read/write only) to prevent
+        other local users from reading cached tokens.
+        """
         if self._token_cache.has_state_changed:
             with open(self.token_cache_file, "w", encoding="utf-8") as f:
                 f.write(self._token_cache.serialize())
+            os.chmod(self.token_cache_file, 0o600)
 
     def service_principal_login(self):
         """Authenticate using service principal (client credentials flow).

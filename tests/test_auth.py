@@ -57,6 +57,22 @@ class TestDatabricksAuthInit(unittest.TestCase):
         auth = DatabricksAuth(config)
         self.assertIsNone(auth.client_secret)
 
+    @patch.dict("os.environ", {"DATABRICKS_CLIENT_SECRET": "env-secret"})
+    @patch("os.path.exists", return_value=False)
+    def test_init_client_secret_from_env(self, mock_exists):
+        """Test that client_secret is loaded from environment variable."""
+        config = self.config.copy()
+        del config["client_secret"]
+        auth = DatabricksAuth(config)
+        self.assertEqual(auth.client_secret, "env-secret")
+
+    @patch.dict("os.environ", {"DATABRICKS_CLIENT_SECRET": "env-secret"})
+    @patch("os.path.exists", return_value=False)
+    def test_init_env_secret_takes_precedence(self, mock_exists):
+        """Test that env variable takes precedence over config file."""
+        auth = DatabricksAuth(self.config)
+        self.assertEqual(auth.client_secret, "env-secret")
+
 
 class TestServicePrincipalLogin(unittest.TestCase):
     """Tests for service principal login flow."""
@@ -342,6 +358,20 @@ class TestTokenCachePersistence(unittest.TestCase):
 
         auth = DatabricksAuth(self.config)
         mock_cache.deserialize.assert_not_called()
+
+    @patch("os.chmod")
+    @patch("builtins.open", mock_open())
+    @patch("os.path.exists", return_value=False)
+    def test_save_cache_sets_permissions(self, mock_exists, mock_chmod):
+        """Test that saving token cache sets file permissions to 600."""
+        mock_cache = MagicMock(has_state_changed=True)
+        mock_cache.serialize.return_value = '{"token": "data"}'
+        mock_msal.SerializableTokenCache.return_value = mock_cache
+
+        auth = DatabricksAuth(self.config)
+        auth._save_token_cache()
+
+        mock_chmod.assert_called_once_with(".token_cache.json", 0o600)
 
 
 if __name__ == "__main__":
