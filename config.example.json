@@ -1,0 +1,9 @@
+{
+    "tenant_id": "your-azure-tenant-id",
+    "client_id": "your-azure-app-client-id",
+    "client_secret": "your-client-secret-for-service-principal",
+    "databricks_host": "https://adb-xxxxxxxxxxxx.xx.azuredatabricks.net",
+    "databricks_scope": "2ff814a6-3304-4ab8-85cb-cd0e6f879c1d/.default",
+    "redirect_uri": "http://localhost:8400",
+    "token_cache_file": ".token_cache.json"
+}
